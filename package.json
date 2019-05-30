@@ -8,6 +8,19 @@
   "scripts": {
     "build": "rollup --config"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/varunzxzx/babel-plugin-use-css.git"
+  },
+  "keywords": [
+    "css",
+    "static",
+    "react"
+  ],
+  "bugs": {
+    "url": "https://github.com/varunzxzx/babel-plugin-use-css/issues"
+  },
+  "homepage": "https://github.com/varunzxzx/babel-plugin-use-css#readme",
   "dependencies": {
     "@emotion/hash": "^0.7.1",
     "stylis": "^3.5.4"

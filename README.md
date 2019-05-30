@@ -1,6 +1,6 @@
 # babel-plugin-use-css
 
-> Allow extracting static CSS from use-css
+> Allow extracting static CSS from [use-css](https://github.com/siddharthkp/use-css#readme)
 
 ## Install
 

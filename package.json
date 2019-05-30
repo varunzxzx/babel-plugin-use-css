@@ -1,0 +1,18 @@
+{
+  "name": "babel-plugin-use-css",
+  "version": "0.0.9",
+  "description": "Babel plugin to extract static CSS from use-css",
+  "main": "dist.js",
+  "author": "varunzxzx",
+  "license": "MIT",
+  "scripts": {
+    "build": "rollup --config"
+  },
+  "dependencies": {
+    "@emotion/hash": "^0.7.1",
+    "stylis": "^3.5.4"
+  },
+  "devDependencies": {
+    "rollup": "^1.12.5"
+  }
+}

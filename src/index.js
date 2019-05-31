@@ -12,56 +12,62 @@ export default function(babel) {
   const t = babel.types;
   return {
     visitor: {
-      TemplateLiteral(path) {
-        if (path.parent.callee.name !== "useCSS") return;
-        if (path.node.quasis.length === 1) return;
-        const templateLiteral = path.node;
+      ImportDeclaration(path) {
+        if (path.node.source.value !== "use-css") return;
+        path.remove();
+      },
+      CallExpression(path) {
+        if (path.node.callee.name !== "useCSS") return;
+        let className;
+        path.traverse({
+          TemplateLiteral(path) {
+            if (path.node.quasis.length === 1) return;
+            const templateLiteral = path.node;
 
-        const identifier = path.parentPath.parentPath.node.id.name;
+            const identifier = path.parentPath.parentPath.node.id.name;
 
-        // convert string literal into string
-        const quasis = [...templateLiteral.quasis];
-        let staticStyle = ``,
-          cssVarName,
-          value;
+            // convert string literal into string
+            const quasis = [...templateLiteral.quasis];
+            let staticStyle = ``,
+              cssVarName,
+              value;
 
-        quasis.map((el, i) => {
-          if (!el.tail) {
-            const expr = templateLiteral.expressions[i];
+            quasis.map((el, i) => {
+              if (!el.tail) {
+                const expr = templateLiteral.expressions[i];
 
-            // check whether the value is an object or an identifier
-            if (t.isMemberExpression(expr)) {
-              value = `${expr.object.name}.${expr.property.name}`;
-            } else {
-              value = expr.name;
-            }
+                // check whether the value is an object or an identifier
+                if (t.isMemberExpression(expr)) {
+                  value = `${expr.object.name}.${expr.property.name}`;
+                } else {
+                  value = expr.name;
+                }
 
-            // generating unique css variable name
-            cssVarName = hash(value);
-            // adding it to the style
-            el.value.cooked += `var(--${cssVarName})`;
+                // generating unique css variable name
+                cssVarName = hash(value);
+                // adding it to the style
+                el.value.cooked += `var(--${cssVarName})`;
+              }
+              staticStyle += el.value.cooked;
+            });
+
+            // add the css variabe name with its value to the styles obj(dynamic styles)
+            styles[identifier] = [cssVarName, value];
+
+            // remove all spaces and line breaks to avoid reconstructing template literal
+            const finalStaticStyle = staticStyle.replace(/\r?\n|\r|\s/g, "");
+
+            className = getClassName(finalStaticStyle);
+
+            const rawCSS = stylis("." + className, finalStaticStyle);
+
+            // save it to the file
+            writeFile("bundle.css", rawCSS, function(err) {
+              if (err) throw err;
+            });
           }
-          staticStyle += el.value.cooked;
         });
-
-        // add the css variabe name with its value to the styles obj(dynamic styles)
-        styles[identifier] = [cssVarName, value];
-
-        // remove all spaces and line breaks to avoid reconstructing template literal
-        const finalStaticStyle = staticStyle.replace(/\r?\n|\r|\s/g, "");
-
-        const rawCSS = stylis(
-          "." + getClassName(finalStaticStyle),
-          finalStaticStyle
-        );
-
-        // save it to the file
-        writeFile("bundle.css", rawCSS, function(err) {
-          if (err) throw err;
-        });
-
-        // replace the node with static style only
-        path.replaceWithSourceString(`"${finalStaticStyle}"`);
+        path.replaceWith(t.StringLiteral(className));
       },
       JSXAttribute(path) {
         if (path.node.value.type !== "JSXExpressionContainer") return;

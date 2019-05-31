@@ -1,6 +1,6 @@
 {
   "name": "babel-plugin-use-css",
-  "version": "0.0.99",
+  "version": "0.0.100",
   "description": "Babel plugin to extract static CSS from use-css",
   "main": "dist.js",
   "author": "varunzxzx",
@@ -13,6 +13,7 @@
     "url": "git+https://github.com/varunzxzx/babel-plugin-use-css.git"
   },
   "keywords": [
+    "babel-plugin",
     "css",
     "static",
     "react"

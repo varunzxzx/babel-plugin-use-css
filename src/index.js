@@ -21,9 +21,7 @@ export default function(babel) {
         let className;
         path.traverse({
           TemplateLiteral(path) {
-            if (path.node.quasis.length === 1) return;
             const templateLiteral = path.node;
-
             const identifier = path.parentPath.parentPath.node.id.name;
 
             // convert string literal into string
@@ -32,27 +30,30 @@ export default function(babel) {
               cssVarName,
               value;
 
-            quasis.map((el, i) => {
-              if (!el.tail) {
-                const expr = templateLiteral.expressions[i];
+            if (path.node.quasis.length !== 1) {
+              quasis.map((el, i) => {
+                if (!el.tail) {
+                  const expr = templateLiteral.expressions[i];
 
-                // check whether the value is an object or an identifier
-                if (t.isMemberExpression(expr)) {
-                  value = `${expr.object.name}.${expr.property.name}`;
-                } else {
-                  value = expr.name;
+                  // check whether the value is an object or an identifier
+                  if (t.isMemberExpression(expr)) {
+                    value = `${expr.object.name}.${expr.property.name}`;
+                  } else {
+                    value = expr.name;
+                  }
+
+                  // generating unique css variable name
+                  cssVarName = hash(value);
+                  // adding it to the style
+                  el.value.cooked += `var(--${cssVarName})`;
                 }
-
-                // generating unique css variable name
-                cssVarName = hash(value);
-                // adding it to the style
-                el.value.cooked += `var(--${cssVarName})`;
-              }
-              staticStyle += el.value.cooked;
-            });
-
-            // add the css variabe name with its value to the styles obj(dynamic styles)
-            styles[identifier] = [cssVarName, value];
+                staticStyle += el.value.cooked;
+                // add the css variabe name with its value to the styles obj(dynamic styles)
+                styles[identifier] = [cssVarName, value];
+              });
+            } else {
+              staticStyle = quasis[0].value.cooked;
+            }
 
             // remove all spaces and line breaks to avoid reconstructing template literal
             const finalStaticStyle = staticStyle.replace(/\r?\n|\r|\s/g, "");

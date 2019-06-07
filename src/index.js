@@ -8,8 +8,7 @@ function getClassName(styles) {
   return "c" + hash(styles);
 }
 
-export default function(babel) {
-  const t = babel.types;
+export default function({ types: t }) {
   return {
     visitor: {
       ImportDeclaration(path) {
@@ -24,13 +23,12 @@ export default function(babel) {
             const templateLiteral = path.node;
             const identifier = path.parentPath.parentPath.node.id.name;
 
-            // convert string literal into string
             const quasis = [...templateLiteral.quasis];
             let staticStyle = ``,
               cssVarName,
               value;
 
-            if (path.node.quasis.length !== 1) {
+            if (quasis.length !== 1) {
               quasis.map((el, i) => {
                 if (!el.tail) {
                   const expr = templateLiteral.expressions[i];
@@ -46,16 +44,17 @@ export default function(babel) {
                   cssVarName = hash(value);
                   // adding it to the style
                   el.value.cooked += `var(--${cssVarName})`;
+
+                  // add the css variabe name with its value to the styles obj(dynamic styles)
+                  styles[identifier] = [cssVarName, value];
                 }
                 staticStyle += el.value.cooked;
-                // add the css variabe name with its value to the styles obj(dynamic styles)
-                styles[identifier] = [cssVarName, value];
               });
             } else {
               staticStyle = quasis[0].value.cooked;
             }
 
-            // remove all spaces and line breaks to avoid reconstructing template literal
+            // convert string literal into string
             const finalStaticStyle = staticStyle.replace(/\r?\n|\r|\s/g, "");
 
             className = getClassName(finalStaticStyle);
